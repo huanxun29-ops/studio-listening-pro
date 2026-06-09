@@ -7,14 +7,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4
-      - name: Install and Build
-        run: |
-          npm install
-          npm run build
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Deploy
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
